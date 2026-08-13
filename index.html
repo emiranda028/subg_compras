@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte Subgerencia de Compras — Modo I a IV | GGA SOFSA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="chart.min.js"></script>
+<script src="xlsx.min.js"></script>
+<style>
+:root{
+  --navy:#0F2438;
+  --navy-2:#16324F;
+  --steel:#2C5F8A;
+  --steel-light:#5C88AC;
+  --rail:#E0742A;
+  --rail-light:#F3A868;
+  --bg:#F3F4F7;
+  --card:#FFFFFF;
+  --line:#DCE1E8;
+  --ink:#16232F;
+  --ink-soft:#5C6B7A;
+  --ok:#2E7D5B;
+  --warn:#C4453D;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.rail-rule{
+  height:10px;
+  background-image:repeating-linear-gradient(90deg, var(--rail) 0 3px, transparent 3px 14px);
+  opacity:.9;
+}
+header.top{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 65%,var(--steel) 100%);
+  color:#fff;
+  padding:34px 40px 28px;
+  position:relative;
+  overflow:hidden;
+}
+header.top::after{
+  content:"";
+  position:absolute;right:-60px;top:-60px;width:280px;height:280px;
+  background:radial-gradient(circle, rgba(224,116,42,.25) 0%, transparent 70%);
+}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--rail-light);
+  margin-bottom:10px;
+}
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(26px,3.2vw,38px);
+  line-height:1.15;
+  max-width:820px;
+}
+.subtitle{
+  margin-top:10px;
+  font-size:15px;
+  color:#C7D3DE;
+  max-width:720px;
+  line-height:1.5;
+}
+.meta-row{
+  display:flex;flex-wrap:wrap;gap:24px;
+  margin-top:22px;
+  font-family:var(--font-mono);
+  font-size:12.5px;
+  color:#AEC0CF;
+}
+.meta-row b{color:#fff;font-weight:600;}
+
+main{max-width:1320px;margin:0 auto;padding:28px 40px 60px;}
+
+.section-label{
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--steel);
+  display:flex;align-items:center;gap:10px;
+  margin:34px 0 14px;
+}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+.section-title{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:20px;
+  color:var(--navy);
+  margin-bottom:2px;
+}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.kpi{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;position:relative;overflow:hidden;
+}
+.kpi.accent{border-color:var(--rail);}
+.kpi .label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.kpi .value{font-family:var(--font-mono);font-weight:600;font-size:24px;color:var(--navy);margin-top:6px;}
+.kpi .sub{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.kpi.accent .value{color:var(--rail);}
+
+/* Compare cards */
+.compare-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.compare-card{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+}
+.compare-card .label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.compare-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;}
+.compare-year{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
+.compare-val{font-family:var(--font-mono);font-weight:600;font-size:19px;color:var(--navy);}
+.compare-val.rail{color:var(--rail);}
+.compare-delta{
+  margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);
+  font-family:var(--font-mono);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;
+}
+.compare-delta.up{color:var(--ok);}
+.compare-delta.down{color:var(--warn);}
+
+/* Filters */
+.filters{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+}
+.filter-field{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1;}
+.filter-field.scope-field{min-width:230px;flex:0 0 auto;}
+.filter-field label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:600;}
+.filter-field select, .filter-field input{
+  font-family:var(--font-body);
+  padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+  font-size:13.5px;background:#fff;color:var(--ink);
+}
+.filter-field select:focus, .filter-field input:focus{outline:2px solid var(--steel-light);outline-offset:1px;}
+.btn{
+  font-family:var(--font-body);font-weight:600;font-size:13px;
+  padding:9px 16px;border-radius:6px;border:1px solid var(--navy);
+  background:var(--navy);color:#fff;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{background:var(--steel);}
+.btn.ghost{background:transparent;color:var(--navy);}
+.btn.ghost:hover{background:var(--bg);}
+.chip-toggle{
+  display:flex;flex-wrap:nowrap;gap:4px;border:1px solid var(--line);border-radius:20px;
+  padding:3px;background:#fff;height:38px;align-items:center;
+}
+.chip-toggle button{
+  border:none;background:transparent;padding:0 14px;height:32px;border-radius:16px;font-size:12.5px;
+  font-weight:600;cursor:pointer;color:var(--ink-soft);font-family:var(--font-body);
+  white-space:nowrap;line-height:32px;transition:background .15s,color .15s;
+}
+.chip-toggle button.active{background:var(--rail);color:#fff;}
+.chip-toggle button:not(.active):hover{background:var(--bg);}
+
+/* Charts grid */
+.charts-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;}
+.charts-grid.two{grid-template-columns:1fr 1fr;}
+.chart-card{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 10px;
+}
+.chart-card h3{
+  font-family:var(--font-display);font-size:14.5px;font-weight:600;color:var(--navy);margin-bottom:2px;
+}
+.chart-card .chart-note{font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;}
+.chart-wrap{position:relative;height:280px;}
+.chart-wrap.tall{height:380px;}
+
+/* Table */
+.table-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.count-badge{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);white-space:nowrap;}
+.table-search{
+  flex:1;min-width:220px;max-width:420px;
+  font-family:var(--font-body);font-size:13px;padding:8px 12px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);
+}
+.table-search:focus{outline:2px solid var(--steel-light);outline-offset:1px;}
+.export-group{display:flex;gap:8px;}
+.export-group button{
+  font-family:var(--font-mono);font-size:11.5px;font-weight:600;
+  padding:6px 12px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;
+}
+.export-group button:hover{border-color:var(--steel);color:var(--steel);}
+.table-scroll{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:640px;
+}
+table{width:100%;border-collapse:collapse;font-size:12.8px;}
+thead th{
+  position:sticky;top:0;background:var(--navy);color:#fff;text-align:left;
+  padding:10px 12px;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;
+  cursor:pointer;user-select:none;white-space:nowrap;
+}
+thead th:hover{background:var(--steel);}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--ink);}
+tbody tr:hover{background:#F7F9FB;}
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-mono);
+}
+.badge.adj{background:#E4F3EC;color:var(--ok);}
+.badge.proc{background:#FDEFE4;color:var(--rail);}
+.badge.pend{background:#FDEAEA;color:var(--warn);}
+.badge.fin{background:#E7ECF3;color:var(--steel);}
+.mono{font-family:var(--font-mono);}
+.desc-cell{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+footer{
+  padding:26px 40px 40px;color:var(--ink-soft);font-size:12px;font-family:var(--font-mono);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+
+@media (max-width:980px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .compare-grid{grid-template-columns:repeat(2,1fr);}
+  .charts-grid, .charts-grid.two{grid-template-columns:1fr;}
+  main{padding:20px;}
+  header.top{padding:26px 20px;}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow">GGA SOFSA · Subgerencia de Presupuesto y Control de Gestión</div>
+  <h1>Reporte para Subgerencia de Compras: Fabián Lucero</h1>
+  <div class="subtitle">Expedientes Modo I a IV — Bienes. Estado consolidado de todas las contrataciones (adjudicadas, en proceso y pendientes) con estadísticas de adjudicación por año, mes, temática y proveedor.</div>
+  <div class="meta-row">
+    <span>Período: <b id="metaPeriodo">—</b></span>
+    <span>Expedientes cargados: <b id="metaTotal">—</b></span>
+    <span>Generado: <b id="metaFecha">—</b></span>
+  </div>
+</header>
+<div class="rail-rule"></div>
+
+<main>
+
+  <div class="section-label">01 — Panorama general</div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="section-label">02 — Comparativa 2025 vs 2026</div>
+  <div class="section-title" style="margin-bottom:2px;">Adjudicado, según filtro actual</div>
+  <div class="chart-note" style="margin-bottom:12px;">Siempre compara los años completos 2025 y 2026 (el filtro "Año" no aplica acá) — sí respeta Modo, Temática, Proveedor y Estado.</div>
+  <div class="compare-grid" id="compareGrid"></div>
+
+  <div class="section-label">03 — Filtros</div>
+  <div class="filters" id="filtersBar"></div>
+
+  <div class="section-label">04 — Adjudicación por año y mes</div>
+  <div class="section-title" style="margin-bottom:12px;">Evolución temporal del monto adjudicado</div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Adjudicado por año</h3><div class="chart-note">Monto (ARS) y cantidad de expedientes con estado ADJUDICADO, según filtros</div><div class="chart-wrap"><canvas id="chartAnio"></canvas></div></div>
+    <div class="chart-card"><h3>Adjudicado por mes</h3><div class="chart-note" id="mesNote">Todos los años cargados</div><div class="chart-wrap"><canvas id="chartMes"></canvas></div></div>
+  </div>
+
+  <div class="section-label">05 — Adjudicación por temática y proveedor</div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Adjudicado por temática</h3><div class="chart-note">Clasificación automática por descripción del expediente</div><div class="chart-wrap tall"><canvas id="chartTematica"></canvas></div></div>
+    <div class="chart-card"><h3>Top 15 proveedores adjudicados</h3><div class="chart-note">Por monto total en órdenes de compra</div><div class="chart-wrap tall"><canvas id="chartProveedor"></canvas></div></div>
+  </div>
+
+  <div class="section-label">06 — Composición general de expedientes</div>
+  <div class="charts-grid two">
+    <div class="chart-card"><h3>Distribución por estado</h3><div class="chart-note">Todos los expedientes cargados (no solo adjudicados)</div><div class="chart-wrap"><canvas id="chartEstado"></canvas></div></div>
+    <div class="chart-card"><h3>Distribución por modo de contratación</h3><div class="chart-note">Modo I a IV, según filtros activos</div><div class="chart-wrap"><canvas id="chartModo"></canvas></div></div>
+  </div>
+
+  <div class="section-label">07 — Detalle de expedientes</div>
+  <div class="table-toolbar">
+    <span class="count-badge" id="rowCount">—</span>
+    <input id="fBuscarTabla" type="text" class="table-search" placeholder="Buscar por expediente, descripción o proveedor...">
+    <div class="export-group">
+      <button id="expCsv">↓ CSV</button>
+      <button id="expXlsx">↓ Excel</button>
+      <button id="expPdf">↓ PDF</button>
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table id="dataTable">
+      <thead><tr>
+        <th data-k="exp">Expediente</th>
+        <th data-k="fecha">Fecha</th>
+        <th data-k="modo">Modo</th>
+        <th data-k="tematica">Temática</th>
+        <th data-k="proveedores">Proveedor</th>
+        <th data-k="desc">Descripción</th>
+        <th data-k="status">Estado</th>
+        <th data-k="importe">Importe</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<div class="rail-rule"></div>
+<footer>
+  <span>GGA SOFSA — Equipo: Emmanuel Miranda · Fabián R. Álvarez · Gustavo Maida</span>
+  <span id="footFecha"></span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
